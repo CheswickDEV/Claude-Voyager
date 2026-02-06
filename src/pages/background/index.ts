@@ -1,0 +1,1 @@
+import { LoggerService } from "../../core/services/LoggerService";import { StorageService } from "../../core/services/StorageService";const logger = LoggerService.getInstance();const storage = StorageService.getInstance();const initialize = async (): Promise<void> => {  await storage.initialize();  logger.info("Background initialized");};void initialize();
