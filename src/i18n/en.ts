@@ -1,0 +1,1 @@
+export const en = {  popup: {    title: "Claude Voyager",    subtitle: "Core settings",    timelineLabel: "Timeline navigation",    foldersLabel: "Folder manager",    promptsLabel: "Prompt library",    exportLabel: "Chat export",    save: "Save",    saved: "Saved"  }};
