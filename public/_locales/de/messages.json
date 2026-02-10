@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Claude Voyager",
+    "description": "Name der Erweiterung"
+  },
+  "extensionDescription": {
+    "message": "Produktivitäts-Features für claude.ai",
+    "description": "Beschreibung der Erweiterung"
+  }
+}

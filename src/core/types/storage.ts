@@ -1,1 +1,0 @@
-export type FeatureFlags = {  timelineEnabled: boolean;  foldersEnabled: boolean;  promptsEnabled: boolean;  exportEnabled: boolean;};export type AppSettings = {  locale: "de" | "en";  features: FeatureFlags;};export type StorageSchema = {  settings: AppSettings;};export type StorageKey = keyof StorageSchema;

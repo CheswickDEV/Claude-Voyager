@@ -1,0 +1,3 @@
+/* Content script styles — loaded alongside the content script on claude.ai */
+/* Base styles are injected dynamically via DOMService.injectStyles() */
+/* This file is for styles that must be available before JS initialization */
