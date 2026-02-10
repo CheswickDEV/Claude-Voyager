@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Firefox-142%2B-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox 142+" />
-  <img src="https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/Manifest-V3-4285F4?logoColor=white" alt="Manifest V3" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License" />
@@ -202,6 +202,24 @@ This project is not affiliated with or endorsed by Anthropic. Claude and claude.
 
 ---
 
-## License
+## 📄 License
 
-[MIT](LICENSE)
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
+
+You're free to use this optimizer personally, commercially, in your own projects, or as part of a larger system.
+
+---
+
+## ⭐ Star This Repo
+
+If this optimizer saves you time or improves your Claude results, please consider starring the repo — it helps others discover it and motivates continued development.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=CheswickDEV/Claude-Voyager&type=Date)](https://star-history.com/#CheswickDEV/Claude-Voyager&Date)
+
+**[⭐ Star this repo](https://github.com/CheswickDEV/Claude-Voyager)** | **[🐛 Report an issue](https://github.com/CheswickDEV/Claude-Voyager/issues)** | **[💡 Request a feature](https://github.com/CheswickDEV/Claude-Voyager/issues/new?template=feature_request.md)**
+
+---
+
+<p align="center">
+  Made with 🖤 by <a href="https://cheswick.dev">cheswick.dev </a> · Not affiliated with Anthropic
+</p>
