@@ -9,12 +9,15 @@
  */
 
 import type { FeatureModule } from '@pages/content/index';
-import type { VoyagerSettings, SavedPrompt } from '@core/types';
+import type { VoyagerSettings, SavedPrompt, Locale } from '@core/types';
 import { DOM } from '@core/services/DOMService';
 import { Storage } from '@core/services/StorageService';
 import { Logger } from '@core/services/LoggerService';
 import { uuid } from '@core/utils';
+import { t } from '@i18n/index';
 import { PROMPT_CSS } from './PromptStyles';
+
+let locale: Locale = 'en';
 
 const TAG = 'Prompts';
 
@@ -59,8 +62,9 @@ function renderTrigger(): void {
 
   const btn = document.createElement('button');
   btn.setAttribute('data-voyager', 'prompt-trigger');
-  btn.setAttribute('data-voyager-tooltip', 'Prompt Library');
-  btn.setAttribute('aria-label', 'Prompt Library');
+  btn.setAttribute('data-voyager-tooltip', t(locale).promptLibrary);
+  btn.setAttribute('data-voyager-tooltip-pos', 'left');
+  btn.setAttribute('aria-label', t(locale).promptLibrary);
   btn.className = 'voyager-prompt-trigger-native';
 
   // Parse SVG safely
@@ -144,12 +148,12 @@ function renderPanel(): void {
 
   // Header
   const header = DOM.createElement('div', { class: 'voyager-prompt-panel-header' });
-  const title = DOM.createElement('span', { class: 'voyager-prompt-panel-title' }, ['Prompt Library']);
+  const title = DOM.createElement('span', { class: 'voyager-prompt-panel-title' }, [t(locale).promptLibrary]);
   const actions = DOM.createElement('div', { class: 'voyager-prompt-panel-actions' });
 
   const addBtn = DOM.createElement('button', {
     class: 'voyager-prompt-panel-btn',
-    title: 'New Prompt',
+    title: t(locale).newPrompt,
   }, ['+']);
   addBtn.addEventListener('click', () => {
     state.showForm = true;
@@ -159,19 +163,19 @@ function renderPanel(): void {
 
   const importBtn = DOM.createElement('button', {
     class: 'voyager-prompt-panel-btn',
-    title: 'Import',
+    title: t(locale).importBtn,
   }, ['\u2B07']);
   importBtn.addEventListener('click', handleImport);
 
   const exportBtn = DOM.createElement('button', {
     class: 'voyager-prompt-panel-btn',
-    title: 'Export',
+    title: t(locale).exportBtn,
   }, ['\u2B06']);
   exportBtn.addEventListener('click', handleExport);
 
   const closeBtn = DOM.createElement('button', {
     class: 'voyager-prompt-panel-btn',
-    title: 'Close',
+    title: t(locale).closeBtn,
   }, ['\u2715']);
   closeBtn.addEventListener('click', () => {
     state.panelOpen = false;
@@ -186,7 +190,7 @@ function renderPanel(): void {
   const searchWrap = DOM.createElement('div', { class: 'voyager-prompt-search' });
   const searchInput = DOM.createElement('input', {
     type: 'text',
-    placeholder: 'Search prompts by title or tag...',
+    placeholder: t(locale).searchPrompts,
     value: state.searchQuery,
   });
   searchInput.addEventListener('input', (e) => {
@@ -216,7 +220,7 @@ function renderPromptList(listEl: HTMLElement): void {
   const filtered = filterPrompts();
   if (filtered.length === 0) {
     const empty = DOM.createElement('div', { class: 'voyager-prompt-empty' }, [
-      state.searchQuery ? 'No prompts found.' : 'No prompts saved yet.',
+      state.searchQuery ? t(locale).noPromptsFound : t(locale).noPromptsSaved,
     ]);
     listEl.appendChild(empty);
     return;
@@ -246,13 +250,13 @@ function renderPromptList(listEl: HTMLElement): void {
     // Action buttons
     const actionsEl = DOM.createElement('div', { class: 'voyager-prompt-item-actions' });
 
-    const insertBtn = DOM.createElement('button', { class: 'voyager-prompt-item-btn' }, ['Insert']);
+    const insertBtn = DOM.createElement('button', { class: 'voyager-prompt-item-btn' }, [t(locale).insertBtn]);
     insertBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       void insertPrompt(prompt);
     });
 
-    const editBtn = DOM.createElement('button', { class: 'voyager-prompt-item-btn' }, ['Edit']);
+    const editBtn = DOM.createElement('button', { class: 'voyager-prompt-item-btn' }, [t(locale).editBtn]);
     editBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       state.editingId = prompt.id;
@@ -260,7 +264,7 @@ function renderPromptList(listEl: HTMLElement): void {
       renderPanel();
     });
 
-    const delBtn = DOM.createElement('button', { class: 'voyager-prompt-item-btn voyager-delete-btn' }, ['Del']);
+    const delBtn = DOM.createElement('button', { class: 'voyager-prompt-item-btn voyager-delete-btn' }, [t(locale).deleteBtn]);
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       deletePrompt(prompt.id);
@@ -287,42 +291,42 @@ function renderForm(): HTMLElement {
 
   const titleInput = DOM.createElement('input', {
     type: 'text',
-    placeholder: 'Prompt title',
+    placeholder: t(locale).promptTitle,
     value: editing?.title ?? '',
   });
 
   const contentInput = DOM.createElement('textarea', {
-    placeholder: 'Prompt content...',
+    placeholder: t(locale).promptContent,
   });
   (contentInput as HTMLTextAreaElement).value = editing?.content ?? '';
 
   const tagsInput = DOM.createElement('input', {
     type: 'text',
-    placeholder: 'Tags (comma-separated)',
+    placeholder: t(locale).tagsSeparated,
     value: editing?.tags.join(', ') ?? '',
   });
 
   const categoryInput = DOM.createElement('input', {
     type: 'text',
-    placeholder: 'Category',
+    placeholder: t(locale).categoryLabel,
     value: editing?.category ?? '',
   });
 
   const btns = DOM.createElement('div', { class: 'voyager-prompt-form-btns' });
-  const cancelBtn = DOM.createElement('button', { class: 'voyager-prompt-form-cancel' }, ['Cancel']);
+  const cancelBtn = DOM.createElement('button', { class: 'voyager-prompt-form-cancel' }, [t(locale).cancel]);
   cancelBtn.addEventListener('click', () => {
     state.showForm = false;
     state.editingId = null;
     renderPanel();
   });
 
-  const saveBtn = DOM.createElement('button', { class: 'voyager-prompt-form-save' }, ['Save']);
+  const saveBtn = DOM.createElement('button', { class: 'voyager-prompt-form-save' }, [t(locale).save]);
   saveBtn.addEventListener('click', async () => {
     const title = (titleInput as HTMLInputElement).value.trim();
     const content = (contentInput as HTMLTextAreaElement).value.trim();
     const tags = (tagsInput as HTMLInputElement).value
       .split(',')
-      .map((t) => t.trim())
+      .map((tag) => tag.trim())
       .filter(Boolean);
     const category = (categoryInput as HTMLInputElement).value.trim();
 
@@ -364,7 +368,7 @@ function renderForm(): HTMLElement {
     } catch (err) {
       state.prompts = previousPrompts;
       Logger.error(TAG, 'Failed to save prompt changes', err);
-      window.alert('Failed to save prompt changes.');
+      window.alert(t(locale).failedSavePrompt);
       return;
     }
 
@@ -466,8 +470,8 @@ async function insertPrompt(prompt: SavedPrompt): Promise<void> {
     const copied = await copyToClipboard(prompt.content);
     window.alert(
       copied
-        ? 'Could not insert prompt automatically. Prompt was copied to clipboard.'
-        : 'Could not insert prompt automatically.',
+        ? t(locale).promptCopiedFallback
+        : t(locale).promptInsertFailed,
     );
     return;
   }
@@ -487,7 +491,7 @@ async function deletePrompt(id: string): Promise<void> {
   } catch (err) {
     state.prompts = previousPrompts;
     Logger.error(TAG, 'Failed to delete prompt', err);
-    window.alert('Failed to delete prompt.');
+    window.alert(t(locale).failedDeletePrompt);
   }
   renderPanel();
 }
@@ -577,7 +581,7 @@ function handleImport(): void {
       try {
         const imported = JSON.parse(reader.result as string) as unknown;
         if (!Array.isArray(imported)) {
-          window.alert('Import failed: JSON must be an array of prompts.');
+          window.alert(t(locale).importFailedPromptArray);
           return;
         }
 
@@ -608,7 +612,7 @@ function handleImport(): void {
         } catch (err) {
           state.prompts = previousPrompts;
           Logger.error(TAG, 'Failed to persist imported prompts', err);
-          window.alert('Import failed: unable to persist prompts.');
+          window.alert(t(locale).failedPersistPrompts);
           return;
         }
         renderPanel();
@@ -622,7 +626,7 @@ function handleImport(): void {
         );
       } catch (err) {
         Logger.error(TAG, 'Import error', err);
-        window.alert('Import failed: file is not valid JSON.');
+        window.alert(t(locale).importFailedPromptJson);
       }
     };
     reader.readAsText(file);
@@ -656,6 +660,7 @@ export const PromptFeature: FeatureModule = {
 
   init(_settings: VoyagerSettings) {
     Logger.info(TAG, 'Initializing prompt library');
+    locale = _settings.locale ?? 'en';
     state = createState();
     DOM.injectStyles('voyager-prompts', PROMPT_CSS);
 

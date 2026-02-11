@@ -10,9 +10,12 @@
  */
 
 import type { FeatureModule } from '@pages/content/index';
-import type { VoyagerSettings, ChatMessage } from '@core/types';
+import type { VoyagerSettings, ChatMessage, Locale } from '@core/types';
 import { DOM } from '@core/services/DOMService';
 import { Logger } from '@core/services/LoggerService';
+import { t } from '@i18n/index';
+
+let locale: Locale = 'en';
 
 const TAG = 'Export';
 
@@ -106,7 +109,7 @@ function renderButton(): void {
   btn.className = NATIVE_BTN_CLASSES;
   btn.type = 'button';
   btn.setAttribute('data-voyager', 'export-btn');
-  btn.textContent = 'Export';
+  btn.textContent = t(locale).exportBtn;
 
   btn.addEventListener('click', toggleMenu);
   state.cleanups.push(() => btn.removeEventListener('click', toggleMenu));
@@ -134,9 +137,9 @@ function toggleMenu(): void {
   }
 
   const options: Array<{ icon: string; label: string; handler: () => void }> = [
-    { icon: '{ }', label: 'Export als JSON', handler: exportJSON },
-    { icon: '#', label: 'Export als Markdown', handler: exportMarkdown },
-    { icon: '\u{1F5B6}', label: 'Export als PDF', handler: exportPDF },
+    { icon: '{ }', label: t(locale).exportAsJson, handler: exportJSON },
+    { icon: '#', label: t(locale).exportAsMarkdown, handler: exportMarkdown },
+    { icon: '\u{1F5B6}', label: t(locale).exportAsPdf, handler: exportPDF },
   ];
 
   for (const opt of options) {
@@ -182,7 +185,7 @@ function removeMenu(): void {
 
 function getConversationData(): { title: string; id: string; messages: ChatMessage[] } {
   const messages = DOM.getChatMessages();
-  const title = DOM.getConversationTitle() ?? 'Untitled Conversation';
+  const title = DOM.getConversationTitle() ?? t(locale).untitledConversation;
   const id = DOM.getConversationId() ?? 'unknown';
   return { title, id, messages };
 }
@@ -217,7 +220,7 @@ function exportMarkdown(): void {
   md += `*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
 
   for (const msg of data.messages) {
-    const label = msg.role === 'human' ? '**You:**' : '**Claude:**';
+    const label = msg.role === 'human' ? `**${t(locale).you}:**` : `**${t(locale).claudeRole}:**`;
     md += `${label}\n\n${msg.contentText}\n\n---\n\n`;
   }
 
@@ -252,7 +255,7 @@ function exportPDF(): void {
   html += `<div class="meta">Exported on ${new Date().toLocaleString()} | ${data.messages.length} messages</div>`;
 
   for (const msg of data.messages) {
-    const roleLabel = msg.role === 'human' ? 'You' : 'Claude';
+    const roleLabel = msg.role === 'human' ? t(locale).you : t(locale).claudeRole;
     html += `<div class="message ${msg.role}">`;
     html += `<div class="role">${roleLabel}</div>`;
     html += `<div class="content">${escapeHtml(msg.contentText)}</div>`;
@@ -321,6 +324,7 @@ export const ExportFeature: FeatureModule = {
 
   init(_settings: VoyagerSettings) {
     Logger.info(TAG, 'Initializing export feature');
+    locale = _settings.locale ?? 'en';
     state = createState();
     DOM.injectStyles('voyager-export', EXPORT_CSS);
     renderButton();

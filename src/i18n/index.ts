@@ -21,6 +21,9 @@ export interface Translations {
   rename: string;
   confirm: string;
   search: string;
+  closeBtn: string;
+  loading: string;
+  saving: string;
 
   // Feature names
   featureTimeline: string;
@@ -47,6 +50,65 @@ export interface Translations {
   // Popup
   popupTitle: string;
   popupSubtitle: string;
+  allOn: string;
+  allOff: string;
+  enableAll: string;
+  disableAll: string;
+
+  // Folder feature
+  folder: string;
+  newFolder: string;
+  noFoldersYet: string;
+  deleteFolder: string;
+  deleteFolderConfirm: string;
+  importedFolder: string;
+  importFailedArray: string;
+  importFailedPersist: string;
+  importFailedJson: string;
+  importFinished: string;
+  failedSaveFolders: string;
+
+  // Prompt feature
+  promptLibrary: string;
+  newPrompt: string;
+  searchPrompts: string;
+  noPromptsFound: string;
+  noPromptsSaved: string;
+  insertBtn: string;
+  editBtn: string;
+  deleteBtn: string;
+  promptTitle: string;
+  promptContent: string;
+  tagsSeparated: string;
+  categoryLabel: string;
+  failedSavePrompt: string;
+  failedDeletePrompt: string;
+  failedPersistPrompts: string;
+  importFailedPromptArray: string;
+  importFailedPromptJson: string;
+  promptImportFinished: string;
+  promptCopiedFallback: string;
+  promptInsertFailed: string;
+
+  // Export feature
+  exportAsJson: string;
+  exportAsMarkdown: string;
+  exportAsPdf: string;
+  untitledConversation: string;
+
+  // Timeline feature
+  messages: string;
+  closeTimeline: string;
+  you: string;
+  claudeRole: string;
+  starLevel1: string;
+  starLevel2: string;
+  starLevel3: string;
+  removeStar: string;
+
+  // Formula copy
+  copyLatex: string;
+  copyLatexSource: string;
 }
 
 const en: Translations = {
@@ -63,6 +125,9 @@ const en: Translations = {
   rename: 'Rename',
   confirm: 'Confirm',
   search: 'Search',
+  closeBtn: 'Close',
+  loading: 'Loading...',
+  saving: 'Saving...',
 
   featureTimeline: 'Timeline Navigation',
   featureFolders: 'Folder Organization',
@@ -85,6 +150,60 @@ const en: Translations = {
 
   popupTitle: 'Claude Voyager',
   popupSubtitle: 'Productivity features for claude.ai',
+  allOn: 'All on',
+  allOff: 'All off',
+  enableAll: 'Enable all',
+  disableAll: 'Disable all',
+
+  folder: 'Folders',
+  newFolder: 'New Folder',
+  noFoldersYet: 'No folders yet. Click + to create one.',
+  deleteFolder: 'Delete folder',
+  deleteFolderConfirm: 'Delete this folder and all subfolders?',
+  importedFolder: 'Imported Folder',
+  importFailedArray: 'Import failed: JSON must be an array of folders.',
+  importFailedPersist: 'Import failed: unable to persist folders.',
+  importFailedJson: 'Import failed: file is not valid JSON.',
+  importFinished: 'Folder import finished.',
+  failedSaveFolders: 'Failed to save folders.',
+
+  promptLibrary: 'Prompt Library',
+  newPrompt: 'New Prompt',
+  searchPrompts: 'Search prompts by title or tag...',
+  noPromptsFound: 'No prompts found.',
+  noPromptsSaved: 'No prompts saved yet.',
+  insertBtn: 'Insert',
+  editBtn: 'Edit',
+  deleteBtn: 'Del',
+  promptTitle: 'Prompt title',
+  promptContent: 'Prompt content...',
+  tagsSeparated: 'Tags (comma-separated)',
+  categoryLabel: 'Category',
+  failedSavePrompt: 'Failed to save prompt changes.',
+  failedDeletePrompt: 'Failed to delete prompt.',
+  failedPersistPrompts: 'Import failed: unable to persist prompts.',
+  importFailedPromptArray: 'Import failed: JSON must be an array of prompts.',
+  importFailedPromptJson: 'Import failed: file is not valid JSON.',
+  promptImportFinished: 'Prompt import finished.',
+  promptCopiedFallback: 'Could not insert prompt automatically. Prompt was copied to clipboard.',
+  promptInsertFailed: 'Could not insert prompt automatically.',
+
+  exportAsJson: 'Export as JSON',
+  exportAsMarkdown: 'Export as Markdown',
+  exportAsPdf: 'Export as PDF',
+  untitledConversation: 'Untitled Conversation',
+
+  messages: 'Messages',
+  closeTimeline: 'Close timeline',
+  you: 'You',
+  claudeRole: 'Claude',
+  starLevel1: '\u2605 Level 1',
+  starLevel2: '\u2605 Level 2',
+  starLevel3: '\u2605 Level 3',
+  removeStar: 'Remove Star',
+
+  copyLatex: 'Copy LaTeX',
+  copyLatexSource: 'Copy LaTeX source',
 };
 
 const de: Translations = {
@@ -101,6 +220,9 @@ const de: Translations = {
   rename: 'Umbenennen',
   confirm: 'Bestätigen',
   search: 'Suchen',
+  closeBtn: 'Schließen',
+  loading: 'Laden...',
+  saving: 'Speichern...',
 
   featureTimeline: 'Timeline-Navigation',
   featureFolders: 'Ordner-Organisation',
@@ -123,6 +245,60 @@ const de: Translations = {
 
   popupTitle: 'Claude Voyager',
   popupSubtitle: 'Produktivitäts-Features für claude.ai',
+  allOn: 'Alle an',
+  allOff: 'Alle aus',
+  enableAll: 'Alle aktivieren',
+  disableAll: 'Alle deaktivieren',
+
+  folder: 'Ordner',
+  newFolder: 'Neuer Ordner',
+  noFoldersYet: 'Noch keine Ordner. Klicke + um einen zu erstellen.',
+  deleteFolder: 'Ordner löschen',
+  deleteFolderConfirm: 'Diesen Ordner und alle Unterordner löschen?',
+  importedFolder: 'Importierter Ordner',
+  importFailedArray: 'Import fehlgeschlagen: JSON muss ein Array von Ordnern sein.',
+  importFailedPersist: 'Import fehlgeschlagen: Ordner konnten nicht gespeichert werden.',
+  importFailedJson: 'Import fehlgeschlagen: Datei ist kein gültiges JSON.',
+  importFinished: 'Ordner-Import abgeschlossen.',
+  failedSaveFolders: 'Ordner konnten nicht gespeichert werden.',
+
+  promptLibrary: 'Prompt-Bibliothek',
+  newPrompt: 'Neuer Prompt',
+  searchPrompts: 'Prompts nach Titel oder Tag suchen...',
+  noPromptsFound: 'Keine Prompts gefunden.',
+  noPromptsSaved: 'Noch keine Prompts gespeichert.',
+  insertBtn: 'Einfügen',
+  editBtn: 'Bearbeiten',
+  deleteBtn: 'Löschen',
+  promptTitle: 'Prompt-Titel',
+  promptContent: 'Prompt-Inhalt...',
+  tagsSeparated: 'Tags (kommagetrennt)',
+  categoryLabel: 'Kategorie',
+  failedSavePrompt: 'Prompt-Änderungen konnten nicht gespeichert werden.',
+  failedDeletePrompt: 'Prompt konnte nicht gelöscht werden.',
+  failedPersistPrompts: 'Import fehlgeschlagen: Prompts konnten nicht gespeichert werden.',
+  importFailedPromptArray: 'Import fehlgeschlagen: JSON muss ein Array von Prompts sein.',
+  importFailedPromptJson: 'Import fehlgeschlagen: Datei ist kein gültiges JSON.',
+  promptImportFinished: 'Prompt-Import abgeschlossen.',
+  promptCopiedFallback: 'Prompt konnte nicht automatisch eingefügt werden. In Zwischenablage kopiert.',
+  promptInsertFailed: 'Prompt konnte nicht automatisch eingefügt werden.',
+
+  exportAsJson: 'Als JSON exportieren',
+  exportAsMarkdown: 'Als Markdown exportieren',
+  exportAsPdf: 'Als PDF exportieren',
+  untitledConversation: 'Unbenannte Konversation',
+
+  messages: 'Nachrichten',
+  closeTimeline: 'Timeline schließen',
+  you: 'Du',
+  claudeRole: 'Claude',
+  starLevel1: '\u2605 Stufe 1',
+  starLevel2: '\u2605 Stufe 2',
+  starLevel3: '\u2605 Stufe 3',
+  removeStar: 'Stern entfernen',
+
+  copyLatex: 'LaTeX kopieren',
+  copyLatexSource: 'LaTeX-Quellcode kopieren',
 };
 
 const translations: Record<Locale, Translations> = { en, de };
@@ -138,4 +314,3 @@ export function detectLocale(): Locale {
   if (lang.startsWith('de')) return 'de';
   return 'en';
 }
-

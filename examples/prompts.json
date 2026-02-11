@@ -1,0 +1,47 @@
+[
+  {
+    "id": "prm-001",
+    "title": "Code Review",
+    "content": "Please review the following code for readability, performance, and potential bugs. Suggest improvements and explain your reasoning.\n\n```\n{{code}}\n```",
+    "tags": ["code", "review", "quality"],
+    "category": "Development",
+    "createdAt": 1738800000000,
+    "updatedAt": 1738800000000
+  },
+  {
+    "id": "prm-002",
+    "title": "Bug Report Template",
+    "content": "Help me write a structured bug report with the following sections:\n\n**Summary:** One sentence describing the issue\n**Steps to Reproduce:**\n1. ...\n2. ...\n**Expected Behavior:** What should happen\n**Actual Behavior:** What actually happens\n**Environment:** Browser, OS, version\n**Screenshots:** If applicable",
+    "tags": ["bug", "template", "documentation"],
+    "category": "Documentation",
+    "createdAt": 1738800000000,
+    "updatedAt": 1738800000000
+  },
+  {
+    "id": "prm-003",
+    "title": "Explain Like I'm 5",
+    "content": "Explain the following concept in simple terms that a 5-year-old could understand. Use analogies and avoid jargon.\n\nConcept: {{topic}}",
+    "tags": ["learning", "simple", "explain"],
+    "category": "Learning",
+    "createdAt": 1738800000000,
+    "updatedAt": 1738800000000
+  },
+  {
+    "id": "prm-004",
+    "title": "Refactor This",
+    "content": "Refactor the following code to improve:\n- Readability and naming\n- DRY principles\n- Error handling\n- TypeScript types (if applicable)\n\nKeep the same functionality. Explain each change.\n\n```\n{{code}}\n```",
+    "tags": ["refactor", "clean-code", "improvement"],
+    "category": "Development",
+    "createdAt": 1738800000000,
+    "updatedAt": 1738800000000
+  },
+  {
+    "id": "prm-005",
+    "title": "Write Unit Tests",
+    "content": "Write comprehensive unit tests for the following function/module. Cover:\n- Happy path\n- Edge cases\n- Error scenarios\n- Boundary values\n\nUse the testing framework that fits the language.\n\n```\n{{code}}\n```",
+    "tags": ["testing", "unit-test", "coverage"],
+    "category": "Development",
+    "createdAt": 1738800000000,
+    "updatedAt": 1738800000000
+  }
+]

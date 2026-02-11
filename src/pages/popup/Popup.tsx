@@ -157,7 +157,7 @@ export function Popup() {
   }, [updateSettings]);
 
   if (loading) {
-    return <div style={styles.loading}>Loading...</div>;
+    return <div style={styles.loading}>{tr.loading}</div>;
   }
 
   return (
@@ -236,10 +236,10 @@ export function Popup() {
             onKeyDown={(e) => {
               if (!saving && (e.key === 'Enter' || e.key === ' ')) void toggleAllFeatures();
             }}
-            title={FEATURE_ORDER.every((k) => settings.features[k]) ? 'Disable all' : 'Enable all'}
+            title={FEATURE_ORDER.every((k) => settings.features[k]) ? tr.disableAll : tr.enableAll}
           >
             <span style={styles.allToggleLabel}>
-              {FEATURE_ORDER.every((k) => settings.features[k]) ? 'All on' : 'All off'}
+              {FEATURE_ORDER.every((k) => settings.features[k]) ? tr.allOn : tr.allOff}
             </span>
             <div
               style={{
@@ -302,7 +302,7 @@ export function Popup() {
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <span>{saving ? 'Saving...' : `Claude Voyager v${DEFAULT_SETTINGS.schemaVersion}.0`}</span>
+        <span>{saving ? tr.saving : `Claude Voyager v${DEFAULT_SETTINGS.schemaVersion}.0`}</span>
       </footer>
     </div>
   );
