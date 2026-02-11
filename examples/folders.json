@@ -1,0 +1,26 @@
+[
+  {
+    "id": "folder-001",
+    "name": "Work Projects",
+    "parentId": null,
+    "conversationIds": [],
+    "createdAt": 1738800000000,
+    "order": 0
+  },
+  {
+    "id": "folder-002",
+    "name": "Personal",
+    "parentId": null,
+    "conversationIds": [],
+    "createdAt": 1738800000000,
+    "order": 1
+  },
+  {
+    "id": "folder-003",
+    "name": "Q1 Planning",
+    "parentId": "folder-001",
+    "conversationIds": [],
+    "createdAt": 1738800000000,
+    "order": 0
+  }
+]

@@ -6,10 +6,13 @@
  */
 
 import type { FeatureModule } from '@pages/content/index';
-import type { VoyagerSettings } from '@core/types';
+import type { VoyagerSettings, Locale } from '@core/types';
 import { DOM } from '@core/services/DOMService';
 import { Logger } from '@core/services/LoggerService';
 import { debounce } from '@core/utils';
+import { t } from '@i18n/index';
+
+let locale: Locale = 'en';
 
 const TAG = 'FormulaCopy';
 
@@ -117,8 +120,8 @@ function processFormulas(): void {
     // Add copy button
     const copyBtn = DOM.createElement('button', {
       class: 'voyager-formula-copy',
-      title: 'Copy LaTeX',
-      'aria-label': 'Copy LaTeX source',
+      title: t(locale).copyLatex,
+      'aria-label': t(locale).copyLatexSource,
     }, ['\u{1F4CB}']);
 
     copyBtn.addEventListener('click', async (e) => {
@@ -143,6 +146,7 @@ export const FormulaCopyFeature: FeatureModule = {
   key: 'formulaCopy',
 
   init(_settings: VoyagerSettings) {
+    locale = _settings.locale ?? 'en';
     Logger.info(TAG, 'Initializing formula copy');
     DOM.injectStyles('voyager-formula', FORMULA_COPY_CSS);
     processFormulas();

@@ -36,7 +36,7 @@ export const PROMPT_CSS = `
   .voyager-prompt-trigger {
     position: fixed;
     bottom: 100px;
-    right: 20px;
+    right: 60px;
     z-index: 9998;
     width: 36px;
     height: 36px;
@@ -64,7 +64,7 @@ export const PROMPT_CSS = `
   .voyager-prompt-panel {
     position: fixed;
     bottom: 145px;
-    right: 20px;
+    right: 60px;
     z-index: 50000;
     width: 340px;
     max-height: 450px;

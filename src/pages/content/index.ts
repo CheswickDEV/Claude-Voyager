@@ -286,6 +286,16 @@ async function main(): Promise<void> {
   // Inject base styles for Voyager UI elements
   DOM.injectStyles('voyager-base', VOYAGER_BASE_CSS);
 
+  // Force re-sync after 1.5s if features didn't render properly on first load.
+  // This handles cases where the DOM wasn't fully ready during initial init.
+  setTimeout(() => {
+    const hasVisibleFeature = !!document.querySelector('[data-voyager]');
+    if (!hasVisibleFeature && activeFeatures.size > 0) {
+      Logger.info(TAG, 'Features not visible after init — forcing re-sync');
+      void syncFeatures();
+    }
+  }, 1500);
+
   Logger.info(TAG, 'Initialization complete');
 }
 
@@ -606,6 +616,32 @@ const VOYAGER_BASE_CSS = `
   }
 
   [data-voyager-tooltip-pos="right"]:hover::after {
+    transform: translateY(-50%) scale(1);
+  }
+
+  /* Tooltip links (for elements near the right edge) */
+  [data-voyager-tooltip-pos="left"]::after {
+    top: 50%;
+    right: calc(100% + 10px);
+    left: auto;
+    bottom: auto;
+    transform: translateY(-50%) scale(0.95);
+    background: #000;
+    color: #fff;
+  }
+
+  [data-voyager-tooltip-pos="left"]::before {
+    top: 50%;
+    right: calc(100% + 2px);
+    left: auto;
+    bottom: auto;
+    transform: translateY(-50%);
+    border-top-color: transparent;
+    border-left-color: #000;
+    border-right-color: transparent;
+  }
+
+  [data-voyager-tooltip-pos="left"]:hover::after {
     transform: translateY(-50%) scale(1);
   }
 `;

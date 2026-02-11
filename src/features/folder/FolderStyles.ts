@@ -236,5 +236,58 @@ export const FOLDER_CSS = `
     color: var(--text-300, rgba(232, 228, 222, 0.3));
     font-size: 13px;
   }
+
+  /* Delete button (hidden by default, visible on hover) */
+  .voyager-folder-del {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-300, rgba(232, 228, 222, 0.3));
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.1s, background 0.1s;
+    margin-left: auto;
+  }
+
+  .voyager-folder-row:hover .voyager-folder-del {
+    display: inline-flex;
+  }
+
+  .voyager-folder-del:hover {
+    color: rgba(220, 90, 70, 0.9);
+    background: rgba(220, 90, 70, 0.1);
+  }
+
+  /* Folder reorder drop indicator */
+  .voyager-folder-reorder-target {
+    outline: 1.5px solid var(--accent-main, rgba(217, 170, 90, 0.6));
+    outline-offset: -1px;
+    background: rgba(217, 170, 90, 0.06);
+  }
+
+  /* Drag reorder indicator line between folders */
+  .voyager-folder-reorder-line {
+    height: 2px;
+    background: var(--accent-main, rgba(217, 170, 90, 0.7));
+    border-radius: 1px;
+    margin: 0 8px;
+    pointer-events: none;
+  }
+
+  .voyager-folder-row[draggable="true"] {
+    cursor: grab;
+  }
+
+  .voyager-folder-row[draggable="true"]:active {
+    cursor: grabbing;
+  }
+
+  .voyager-folder-row.voyager-folder-dragging-row {
+    opacity: 0.4;
+  }
 `;
 

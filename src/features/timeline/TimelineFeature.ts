@@ -12,12 +12,15 @@
  */
 
 import type { FeatureModule } from '@pages/content/index';
-import type { VoyagerSettings, ChatMessage, StarredMessage } from '@core/types';
+import type { VoyagerSettings, ChatMessage, StarredMessage, Locale } from '@core/types';
 import { DOM } from '@core/services/DOMService';
 import { Storage } from '@core/services/StorageService';
 import { Logger } from '@core/services/LoggerService';
 import { debounce, throttle } from '@core/utils';
+import { t } from '@i18n/index';
 import { TIMELINE_CSS } from './TimelineStyles';
+
+let locale: Locale = 'en';
 
 const TAG = 'Timeline';
 const PREVIEW_LENGTH = 40;
@@ -73,8 +76,8 @@ function renderTimeline(): void {
   // ── Toggle tab (drawer handle) ──
   const toggleBtn = DOM.createElement('div', {
     'data-voyager': 'timeline-toggle',
-    'data-voyager-tooltip': 'Timeline',
-    'data-voyager-tooltip-pos': 'bottom',
+    'data-voyager-tooltip': t(locale).featureTimeline,
+    'data-voyager-tooltip-pos': 'left',
     class: 'voyager-timeline-toggle' + (state.panelOpen ? ' voyager-panel-open' : ''),
   });
   const toggleIcon = DOM.createElement('span', { class: 'voyager-timeline-toggle-icon' }, [
@@ -94,7 +97,7 @@ function renderTimeline(): void {
   // Header with close button
   const header = DOM.createElement('div', { class: 'voyager-timeline-header' });
   const headerLeft = DOM.createElement('div', { class: 'voyager-timeline-header-left' });
-  const title = DOM.createElement('span', { class: 'voyager-timeline-title' }, ['Messages']);
+  const title = DOM.createElement('span', { class: 'voyager-timeline-title' }, [t(locale).messages]);
   const count = DOM.createElement('span', { class: 'voyager-timeline-count' }, [
     String(state.messages.length),
   ]);
@@ -103,8 +106,8 @@ function renderTimeline(): void {
 
   const closeBtn = DOM.createElement('button', {
     class: 'voyager-timeline-close',
-    title: 'Close',
-    'aria-label': 'Close timeline',
+    title: t(locale).closeBtn,
+    'aria-label': t(locale).closeTimeline,
   }, ['\u00D7']);
 
   header.appendChild(headerLeft);
@@ -130,12 +133,19 @@ function renderTimeline(): void {
     'data-voyager': 'timeline-context',
     class: 'voyager-timeline-context voyager-hidden',
   });
-  contextMenu.innerHTML = `
-    <div class="voyager-ctx-item" data-level="1">\u2605 Level 1</div>
-    <div class="voyager-ctx-item" data-level="2">\u2605 Level 2</div>
-    <div class="voyager-ctx-item" data-level="3">\u2605 Level 3</div>
-    <div class="voyager-ctx-item voyager-ctx-unstar" data-level="0">Remove Star</div>
-  `;
+  const ctxItems = [
+    { level: '1', label: t(locale).starLevel1 },
+    { level: '2', label: t(locale).starLevel2 },
+    { level: '3', label: t(locale).starLevel3 },
+    { level: '0', label: t(locale).removeStar, cls: 'voyager-ctx-unstar' },
+  ];
+  for (const item of ctxItems) {
+    const el = DOM.createElement('div', {
+      class: 'voyager-ctx-item' + (item.cls ? ' ' + item.cls : ''),
+      'data-level': item.level,
+    }, [item.label]);
+    contextMenu.appendChild(el);
+  }
 
   // Append to DOM
   document.body.appendChild(toggleBtn);
@@ -159,7 +169,7 @@ function buildMessageRow(
   index: number,
   starred: StarredMessage | undefined,
 ): HTMLElement {
-  const roleLabel = msg.role === 'human' ? (cachedUserName ?? 'You') : 'Claude';
+  const roleLabel = msg.role === 'human' ? (cachedUserName ?? t(locale).you) : t(locale).claudeRole;
   const preview = msg.contentText.slice(0, PREVIEW_LENGTH).replace(/\n/g, ' ') +
     (msg.contentText.length > PREVIEW_LENGTH ? '\u2026' : '');
 
@@ -542,7 +552,7 @@ export const TimelineFeature: FeatureModule = {
 
   init(settings: VoyagerSettings) {
     Logger.info(TAG, 'Initializing timeline feature');
-    void settings;
+    locale = settings.locale ?? 'en';
 
     state = createInitialState();
     state.conversationId = DOM.getConversationId();

@@ -13,12 +13,15 @@
  */
 
 import type { FeatureModule } from '@pages/content/index';
-import type { VoyagerSettings, Folder } from '@core/types';
+import type { VoyagerSettings, Folder, Locale } from '@core/types';
 import { DOM } from '@core/services/DOMService';
 import { Storage } from '@core/services/StorageService';
 import { Logger } from '@core/services/LoggerService';
 import { uuid } from '@core/utils';
+import { t } from '@i18n/index';
 import { FOLDER_CSS } from './FolderStyles';
+
+let locale: Locale = 'en';
 
 const TAG = 'Folders';
 const LONG_PRESS_MS = 500;
@@ -115,7 +118,7 @@ function ensureNativeTooltip(): HTMLElement {
     class: 'voyager-folder-native-tooltip',
     role: 'tooltip',
     'aria-hidden': 'true',
-  }, ['Ordner']);
+  }, [t(locale).folder]);
   document.body.appendChild(tooltip);
   state.tooltipEl = tooltip;
   return tooltip;
@@ -211,7 +214,7 @@ function createNativeSidebarItem(templateItem: Element | null): HTMLElement | nu
 
     const link = getNavLink(wrapper);
     if (link) {
-      link.setAttribute('aria-label', 'Ordner');
+      link.setAttribute('aria-label', t(locale).folder);
       link.setAttribute('href', '#voyager-folders');
       link.setAttribute('data-voyager', 'folder-toggle');
       link.removeAttribute('title');
@@ -220,12 +223,12 @@ function createNativeSidebarItem(templateItem: Element | null): HTMLElement | nu
       const label = link.querySelector('span.truncate') as HTMLElement | null;
       const labelInner = label?.querySelector('div') as HTMLElement | null;
       if (labelInner) {
-        labelInner.textContent = 'Ordner';
+        labelInner.textContent = t(locale).folder;
       } else if (label) {
-        label.textContent = 'Ordner';
+        label.textContent = t(locale).folder;
       }
       const srOnly = link.querySelector('.sr-only');
-      if (srOnly) srOnly.textContent = 'Ordner';
+      if (srOnly) srOnly.textContent = t(locale).folder;
 
       // Remove search shortcut badge cloned from "Suchen".
       const shortcutHints = link.querySelectorAll('span');
@@ -438,31 +441,31 @@ function renderPanel(): void {
 
   // Header
   const header = DOM.createElement('div', { class: 'voyager-folder-header' });
-  const title = DOM.createElement('span', { class: 'voyager-folder-title' }, ['Ordner']);
+  const title = DOM.createElement('span', { class: 'voyager-folder-title' }, [t(locale).folder]);
   const actions = DOM.createElement('div', { class: 'voyager-folder-actions' });
 
   const addBtn = DOM.createElement('button', {
     class: 'voyager-folder-btn',
-    title: 'New Folder',
-    'aria-label': 'New Folder',
+    title: t(locale).newFolder,
+    'aria-label': t(locale).newFolder,
   }, ['+']);
 
   const importBtn = DOM.createElement('button', {
     class: 'voyager-folder-btn',
-    title: 'Import',
-    'aria-label': 'Import Folders',
+    title: t(locale).importBtn,
+    'aria-label': t(locale).importBtn,
   }, ['\u2B07']);
 
   const exportBtn = DOM.createElement('button', {
     class: 'voyager-folder-btn',
-    title: 'Export',
-    'aria-label': 'Export Folders',
+    title: t(locale).exportBtn,
+    'aria-label': t(locale).exportBtn,
   }, ['\u2B06']);
 
   const closeBtn = DOM.createElement('button', {
     class: 'voyager-folder-btn',
-    title: 'Close',
-    'aria-label': 'Close Folders',
+    title: t(locale).closeBtn,
+    'aria-label': t(locale).closeBtn,
   }, ['\u00D7']);
 
   actions.append(addBtn, importBtn, exportBtn, closeBtn);
@@ -477,7 +480,7 @@ function renderPanel(): void {
 
   if (topLevel.length === 0) {
     const empty = DOM.createElement('div', { class: 'voyager-folder-empty' }, [
-      'No folders yet. Click + to create one.',
+      t(locale).noFoldersYet,
     ]);
     list.appendChild(empty);
   } else {
@@ -571,6 +574,9 @@ function renderPanel(): void {
   // Drag-and-drop from sidebar conversations
   setupDragDrop(list);
 
+  // Folder reorder via drag & drop
+  setupFolderReorder(list);
+
   // Resize handling
   setupResize(panel, resizeHandle);
 
@@ -596,7 +602,7 @@ function renderFolder(folder: Folder): HTMLElement {
   const row = DOM.createElement('div', {
     class: `voyager-folder-row${isSelected ? ' voyager-folder-selected' : ''}`,
     'data-voyager-id': folder.id,
-    draggable: 'false',
+    draggable: 'true',
   });
 
   const icon = DOM.createElement('span', {
@@ -654,7 +660,16 @@ function renderFolder(folder: Folder): HTMLElement {
     const count = DOM.createElement('span', { class: 'voyager-folder-count' }, [
       String(folder.conversationIds.length),
     ]);
-    row.append(icon, name, count);
+    const delBtn = DOM.createElement('button', {
+      class: 'voyager-folder-del',
+      title: t(locale).deleteFolder,
+      'aria-label': t(locale).deleteFolder,
+    }, ['\u2715']);
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      void handleDeleteFolder(folder.id);
+    });
+    row.append(icon, name, count, delBtn);
   }
 
   el.appendChild(row);
@@ -758,11 +773,33 @@ function toggleSelect(folderId: string): void {
   renderPanel();
 }
 
+async function handleDeleteFolder(folderId: string): Promise<void> {
+  if (!window.confirm(t(locale).deleteFolderConfirm)) return;
+
+  const previousFolders = cloneFolders(state.folders);
+  const idsToDelete = new Set<string>();
+  function collectIds(id: string): void {
+    idsToDelete.add(id);
+    for (const f of state.folders) {
+      if (f.parentId === id) collectIds(f.id);
+    }
+  }
+  collectIds(folderId);
+
+  state.folders = state.folders.filter((f) => !idsToDelete.has(f.id));
+  state.openFolders = new Set([...state.openFolders].filter((id) => !idsToDelete.has(id)));
+  state.selectedFolders = new Set([...state.selectedFolders].filter((id) => !idsToDelete.has(id)));
+
+  const saved = await persistFoldersWithRollback(previousFolders, 'Failed to delete folder');
+  if (!saved) return;
+  renderPanel();
+}
+
 async function handleAddFolder(): Promise<void> {
   const previousFolders = cloneFolders(state.folders);
   const folder: Folder = {
     id: uuid(),
-    name: 'New Folder',
+    name: t(locale).newFolder,
     parentId: null,
     conversationIds: [],
     createdAt: Date.now(),
@@ -802,9 +839,11 @@ function setupDragDrop(list: HTMLElement): void {
     state.cleanups.push(() => item.removeEventListener('dragend', dragEndHandler));
   }
 
-  // Drop targets on folders
+  // Drop targets on folders (only for conversation drops, not folder reorder)
   const dragOverHandler = (e: Event) => {
     const de = e as DragEvent;
+    // Skip if this is a folder reorder drag
+    if (de.dataTransfer?.types.includes('application/x-voyager-folder')) return;
     const target = (de.target as Element | null)?.closest('.voyager-folder-row');
     if (target) {
       de.preventDefault();
@@ -856,6 +895,119 @@ function setupDragDrop(list: HTMLElement): void {
   };
   list.addEventListener('drop', dropHandler);
   state.cleanups.push(() => list.removeEventListener('drop', dropHandler));
+}
+
+// ─── Folder Reorder (Drag & Drop) ───────────────────────────────
+
+function setupFolderReorder(list: HTMLElement): void {
+  let draggedFolderId: string | null = null;
+
+  const rows = list.querySelectorAll('.voyager-folder-row[draggable="true"]');
+  for (const row of rows) {
+    const htmlRow = row as HTMLElement;
+    const folderId = htmlRow.getAttribute('data-voyager-id');
+    if (!folderId) continue;
+
+    const onDragStart = (e: Event) => {
+      const de = e as DragEvent;
+      draggedFolderId = folderId;
+      if (de.dataTransfer) {
+        de.dataTransfer.setData('application/x-voyager-folder', folderId);
+        de.dataTransfer.effectAllowed = 'move';
+      }
+      htmlRow.classList.add('voyager-folder-dragging-row');
+    };
+
+    const onDragEnd = () => {
+      htmlRow.classList.remove('voyager-folder-dragging-row');
+      draggedFolderId = null;
+      // Remove all reorder indicators
+      list.querySelectorAll('.voyager-folder-reorder-target').forEach((el) =>
+        el.classList.remove('voyager-folder-reorder-target'),
+      );
+    };
+
+    htmlRow.addEventListener('dragstart', onDragStart);
+    htmlRow.addEventListener('dragend', onDragEnd);
+    state.cleanups.push(() => htmlRow.removeEventListener('dragstart', onDragStart));
+    state.cleanups.push(() => htmlRow.removeEventListener('dragend', onDragEnd));
+  }
+
+  // Dragover on folder rows — show reorder indicator
+  const onDragOver = (e: Event) => {
+    const de = e as DragEvent;
+    if (!draggedFolderId) return;
+    // Only handle folder-to-folder reorder, not conversation drops
+    if (!de.dataTransfer?.types.includes('application/x-voyager-folder')) return;
+
+    const target = (de.target as Element | null)?.closest('.voyager-folder-row') as HTMLElement | null;
+    if (!target || target.getAttribute('data-voyager-id') === draggedFolderId) return;
+
+    de.preventDefault();
+    if (de.dataTransfer) de.dataTransfer.dropEffect = 'move';
+
+    // Clear previous indicators
+    list.querySelectorAll('.voyager-folder-reorder-target').forEach((el) =>
+      el.classList.remove('voyager-folder-reorder-target'),
+    );
+    target.classList.add('voyager-folder-reorder-target');
+  };
+
+  const onDragLeave = (e: Event) => {
+    const target = (e.target as Element | null)?.closest('.voyager-folder-row');
+    target?.classList.remove('voyager-folder-reorder-target');
+  };
+
+  const onDrop = async (e: Event) => {
+    const de = e as DragEvent;
+    if (!draggedFolderId) return;
+
+    const sourceFolderId = de.dataTransfer?.getData('application/x-voyager-folder');
+    if (!sourceFolderId) return;
+
+    de.preventDefault();
+    const targetRow = (de.target as Element | null)?.closest('.voyager-folder-row');
+    targetRow?.classList.remove('voyager-folder-reorder-target');
+
+    const targetFolderId = targetRow?.getAttribute('data-voyager-id');
+    if (!targetFolderId || targetFolderId === sourceFolderId) return;
+
+    const sourceFolder = state.folders.find((f) => f.id === sourceFolderId);
+    const targetFolder = state.folders.find((f) => f.id === targetFolderId);
+    if (!sourceFolder || !targetFolder) return;
+
+    // Only reorder within the same parent level
+    if (sourceFolder.parentId !== targetFolder.parentId) return;
+
+    const previousFolders = cloneFolders(state.folders);
+    const siblings = state.folders
+      .filter((f) => f.parentId === sourceFolder.parentId)
+      .sort((a, b) => a.order - b.order);
+
+    // Remove source from current position and insert at target position
+    const withoutSource = siblings.filter((f) => f.id !== sourceFolderId);
+    const targetIndex = withoutSource.findIndex((f) => f.id === targetFolderId);
+    withoutSource.splice(targetIndex + 1, 0, sourceFolder);
+
+    // Update order values
+    withoutSource.forEach((f, i) => {
+      f.order = i;
+    });
+
+    const saved = await persistFoldersWithRollback(previousFolders, 'Failed to reorder folders');
+    if (!saved) return;
+
+    draggedFolderId = null;
+    renderPanel();
+    Logger.info(TAG, `Reordered folder "${sourceFolder.name}" after "${targetFolder.name}"`);
+  };
+
+  list.addEventListener('dragover', onDragOver);
+  list.addEventListener('dragleave', onDragLeave);
+  list.addEventListener('drop', onDrop);
+  state.cleanups.push(() => list.removeEventListener('dragover', onDragOver));
+  state.cleanups.push(() => list.removeEventListener('dragleave', onDragLeave));
+  state.cleanups.push(() => list.removeEventListener('drop', onDrop));
 }
 
 // ─── Import / Export ────────────────────────────────────────────
@@ -914,7 +1066,7 @@ function normalizeImportedFolder(raw: unknown, fallbackOrder: number): Folder | 
   const now = Date.now();
   return {
     id: parsedId ?? uuid(),
-    name: parsedName ?? 'Imported Folder',
+    name: parsedName ?? t(locale).importedFolder,
     parentId: normalizeNonEmptyString(data.parentId),
     conversationIds: normalizeStringList(data.conversationIds),
     createdAt: normalizeTimestamp(data.createdAt, now),
@@ -935,7 +1087,7 @@ function handleImport(): void {
       try {
         const imported = JSON.parse(reader.result as string) as unknown;
         if (!Array.isArray(imported)) {
-          window.alert('Import failed: JSON must be an array of folders.');
+          window.alert(t(locale).importFailedArray);
           return;
         }
 
@@ -992,13 +1144,13 @@ function handleImport(): void {
         } catch (err) {
           state.folders = previousFolders;
           Logger.error(TAG, 'Failed to persist imported folders', err);
-          window.alert('Import failed: unable to persist folders.');
+          window.alert(t(locale).importFailedPersist);
           return;
         }
         renderPanel();
 
         window.alert(
-          `Folder import finished.\nImported: ${normalized.length}\nSkipped duplicates: ${duplicateCount}\nSkipped invalid: ${invalidCount}`,
+          `${t(locale).importFinished}\nImported: ${normalized.length}\nSkipped duplicates: ${duplicateCount}\nSkipped invalid: ${invalidCount}`,
         );
         Logger.info(
           TAG,
@@ -1006,7 +1158,7 @@ function handleImport(): void {
         );
       } catch (err) {
         Logger.error(TAG, 'Import parse error', err);
-        window.alert('Import failed: file is not valid JSON.');
+        window.alert(t(locale).importFailedJson);
       }
     };
     reader.readAsText(file);
@@ -1030,7 +1182,7 @@ async function persistFoldersWithRollback(previousFolders: Folder[], context: st
   } catch (err) {
     state.folders = previousFolders;
     Logger.error(TAG, context, err);
-    window.alert('Failed to save folders.');
+    window.alert(t(locale).failedSaveFolders);
     return false;
   }
 }
@@ -1057,6 +1209,7 @@ export const FolderFeature: FeatureModule = {
 
   init(_settings: VoyagerSettings) {
     Logger.info(TAG, 'Initializing folder feature');
+    locale = _settings.locale ?? 'en';
     state = createState();
     DOM.injectStyles('voyager-folders', FOLDER_CSS);
 
