@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin, type UserConfig, build } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, existsSync, rmSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, rmSync, cpSync } from 'fs';
 
 const aliasConfig = {
   '@core': resolve(__dirname, 'src/core'),
@@ -96,6 +96,10 @@ function multiBuildPlugin(): Plugin {
         resolve(__dirname, 'src/pages/content/content.css'),
         resolve(assetsDir, 'content.css'),
       );
+
+      // Copy _locales and icons from repo root into dist
+      cpSync(resolve(__dirname, '_locales'), resolve(distDir, '_locales'), { recursive: true });
+      cpSync(resolve(__dirname, 'icons'), resolve(distDir, 'icons'), { recursive: true });
     },
   };
 }
