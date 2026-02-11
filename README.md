@@ -35,6 +35,12 @@ Claude Voyager adds focused productivity tools directly into the claude.ai inter
 
 ## Features
 
+
+<p align="center">
+  <img src="https://i.imgur.com/xXf0N5b.png" />
+</p>
+
+
 | Feature | Description |
 |---------|-------------|
 | **Timeline Navigation** | Dot timeline on the side of messages for quick jumps. Long-press to star important points. |
