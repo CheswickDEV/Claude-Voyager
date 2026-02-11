@@ -57,9 +57,11 @@ Claude Voyager adds focused productivity tools directly into the claude.ai inter
 ### From ZIP (recommended)
 
 1. Download the latest `claude-voyager-x.x.x.zip` from [Releases](../../releases)
-2. Open `about:debugging#/runtime/this-firefox`
-3. Click **Load Temporary Add-on...**
-4. Select the `.zip` file or extract and select `manifest.json`
+2. Extract the archive to a folder of your choice.
+3. Open a terminal within that folder and run `npm install` followed by `npm run build`.
+4. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
+5. Click **Load Temporary Add-on...**
+6. Select the `manifest.json` file located in the `.\dist` directory.
 
 ### From Source
 
