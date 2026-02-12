@@ -160,6 +160,14 @@ export const PROMPT_CSS = `
     margin: 1px 0;
   }
 
+  .voyager-prompt-item + .voyager-prompt-item::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 8px 6px;
+  }
+
   .voyager-prompt-item:hover {
     background: var(--bg-200, rgba(255, 255, 255, 0.06));
   }

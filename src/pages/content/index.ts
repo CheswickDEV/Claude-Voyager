@@ -14,7 +14,7 @@ import { Storage } from '@core/services/StorageService';
 import { DOM } from '@core/services/DOMService';
 import { Messaging } from '@core/services/MessageService';
 import { debounce } from '@core/utils';
-import type { VoyagerSettings, FeatureKey } from '@core/types';
+import type { VoyagerSettings, FeatureKey, Locale } from '@core/types';
 
 // â”€â”€â”€ Feature Imports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import { TimelineFeature } from '@features/timeline/TimelineFeature';
@@ -26,6 +26,7 @@ import { TabTitleSyncFeature } from '@features/tabTitleSync/TabTitleSyncFeature'
 import { FormulaCopyFeature } from '@features/formulaCopy/FormulaCopyFeature';
 
 const TAG = 'Content';
+let currentLocale: Locale = 'en';
 
 /** Feature module interface â€” each feature implements this */
 export interface FeatureModule {
@@ -115,6 +116,15 @@ async function syncFeatures(): Promise<void> {
   const settings = await Storage.getSettings();
   const featureKeys = Object.keys(settings.features) as FeatureKey[];
 
+  // If locale changed, destroy all active features so they re-init with the new locale
+  if (settings.locale !== currentLocale) {
+    Logger.info(TAG, `Locale changed: ${currentLocale} → ${settings.locale} — reinitializing features`);
+    for (const key of [...activeFeatures]) {
+      deactivateFeature(key);
+    }
+  }
+  currentLocale = settings.locale;
+
   for (const key of featureKeys) {
     if (settings.features[key]) {
       activateFeature(key, settings);
@@ -158,7 +168,18 @@ function checkNavigation(): void {
   // claude.ai replaces the main content element on SPA navigation,
   // which orphans the old MutationObserver. Wait briefly for React
   // to render the new container before reconnecting.
-  setTimeout(() => setupMessageObserver(), 300);
+  setTimeout(() => setupMessageObserver(), 500);
+
+  // Force re-sync after navigation if features didn't render.
+  // Same retry pattern as initial page load — handles slow DOM rebuilds.
+  for (const delay of [1500, 3000, 5000]) {
+    setTimeout(() => {
+      if (!document.querySelector('[data-voyager]') && activeFeatures.size > 0) {
+        Logger.info(TAG, `Features not visible ${delay}ms after nav — forcing re-sync`);
+        void syncFeatures();
+      }
+    }, delay);
+  }
 }
 
 // â”€â”€â”€ Message Observer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -286,15 +307,16 @@ async function main(): Promise<void> {
   // Inject base styles for Voyager UI elements
   DOM.injectStyles('voyager-base', VOYAGER_BASE_CSS);
 
-  // Force re-sync after 1.5s if features didn't render properly on first load.
-  // This handles cases where the DOM wasn't fully ready during initial init.
-  setTimeout(() => {
-    const hasVisibleFeature = !!document.querySelector('[data-voyager]');
-    if (!hasVisibleFeature && activeFeatures.size > 0) {
-      Logger.info(TAG, 'Features not visible after init — forcing re-sync');
-      void syncFeatures();
-    }
-  }, 1500);
+  // Force re-sync if features didn't render properly on first load.
+  // Uses multiple retries to handle slow DOM builds.
+  for (const delay of [1500, 3000, 5000]) {
+    setTimeout(() => {
+      if (!document.querySelector('[data-voyager]') && activeFeatures.size > 0) {
+        Logger.info(TAG, `Features not visible after ${delay}ms — forcing re-sync`);
+        void syncFeatures();
+      }
+    }, delay);
+  }
 
   Logger.info(TAG, 'Initialization complete');
 }

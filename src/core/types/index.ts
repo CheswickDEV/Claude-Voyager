@@ -20,13 +20,13 @@ export type FeatureToggles = Record<FeatureKey, boolean>;
 
 /** Default feature toggle state */
 export const DEFAULT_FEATURE_TOGGLES: FeatureToggles = {
-  timeline: true,
-  folders: true,
-  prompts: true,
-  export: true,
-  widthAdjust: true,
-  tabTitleSync: true,
-  formulaCopy: true,
+  timeline: false,
+  folders: false,
+  prompts: false,
+  export: false,
+  widthAdjust: false,
+  tabTitleSync: false,
+  formulaCopy: false,
 };
 
 /** Global extension settings persisted in storage */
@@ -59,12 +59,18 @@ export interface SavedPrompt {
   updatedAt: number;
 }
 
+/** A conversation reference stored inside a folder */
+export interface FolderConversation {
+  id: string;
+  title: string;
+}
+
 /** A folder for organizing conversations */
 export interface Folder {
   id: string;
   name: string;
   parentId: string | null;
-  conversationIds: string[];
+  conversations: FolderConversation[];
   createdAt: number;
   order: number;
 }

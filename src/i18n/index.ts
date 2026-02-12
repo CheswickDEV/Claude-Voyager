@@ -58,9 +58,11 @@ export interface Translations {
   // Folder feature
   folder: string;
   newFolder: string;
+  newSubfolder: string;
   noFoldersYet: string;
   deleteFolder: string;
   deleteFolderConfirm: string;
+  removeFromFolder: string;
   importedFolder: string;
   importFailedArray: string;
   importFailedPersist: string;
@@ -157,9 +159,11 @@ const en: Translations = {
 
   folder: 'Folders',
   newFolder: 'New Folder',
+  newSubfolder: 'New Subfolder',
   noFoldersYet: 'No folders yet. Click + to create one.',
   deleteFolder: 'Delete folder',
   deleteFolderConfirm: 'Delete this folder and all subfolders?',
+  removeFromFolder: 'Remove from folder',
   importedFolder: 'Imported Folder',
   importFailedArray: 'Import failed: JSON must be an array of folders.',
   importFailedPersist: 'Import failed: unable to persist folders.',
@@ -252,9 +256,11 @@ const de: Translations = {
 
   folder: 'Ordner',
   newFolder: 'Neuer Ordner',
+  newSubfolder: 'Neuer Unterordner',
   noFoldersYet: 'Noch keine Ordner. Klicke + um einen zu erstellen.',
   deleteFolder: 'Ordner löschen',
   deleteFolderConfirm: 'Diesen Ordner und alle Unterordner löschen?',
+  removeFromFolder: 'Aus Ordner entfernen',
   importedFolder: 'Importierter Ordner',
   importFailedArray: 'Import fehlgeschlagen: JSON muss ein Array von Ordnern sein.',
   importFailedPersist: 'Import fehlgeschlagen: Ordner konnten nicht gespeichert werden.',

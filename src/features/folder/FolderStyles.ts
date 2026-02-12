@@ -106,6 +106,14 @@ export const FOLDER_CSS = `
     margin: 1px 0;
   }
 
+  .voyager-folder + .voyager-folder::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 4px 10px 4px;
+  }
+
   .voyager-folder-row {
     display: flex;
     align-items: center;
@@ -169,9 +177,43 @@ export const FOLDER_CSS = `
     flex-shrink: 0;
   }
 
+  /* Subfolder add button (hidden by default, visible on hover) */
+  .voyager-folder-add-sub {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-300, rgba(232, 228, 222, 0.3));
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.1s, background 0.1s;
+  }
+
+  .voyager-folder-row:hover .voyager-folder-add-sub {
+    display: inline-flex;
+  }
+
+  .voyager-folder-add-sub:hover {
+    color: var(--text-100, rgba(232, 228, 222, 0.9));
+    background: var(--bg-200, rgba(255, 255, 255, 0.06));
+  }
+
   /* Subfolder / conversations */
   .voyager-folder-children {
     padding-left: 16px;
+  }
+
+  /* Divider between subfolders and conversations inside an open folder */
+  .voyager-folder-children .voyager-folder-conv:first-of-type::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.10);
+    margin: 4px 6px 4px;
   }
 
   .voyager-folder-conv {
@@ -194,10 +236,42 @@ export const FOLDER_CSS = `
     color: var(--text-100, rgba(232, 228, 222, 0.9));
   }
 
+  .voyager-folder-conv-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .voyager-folder-conv-icon {
     font-size: 10px;
     opacity: 0.5;
     flex-shrink: 0;
+  }
+
+  /* Conversation delete button (hidden by default, visible on hover) */
+  .voyager-folder-conv-del {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-300, rgba(232, 228, 222, 0.3));
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 10px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.1s, background 0.1s;
+    margin-left: auto;
+  }
+
+  .voyager-folder-conv:hover .voyager-folder-conv-del {
+    display: inline-flex;
+  }
+
+  .voyager-folder-conv-del:hover {
+    color: rgba(220, 90, 70, 0.9);
+    background: rgba(220, 90, 70, 0.1);
   }
 
   /* Resize handle */

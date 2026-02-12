@@ -13,7 +13,7 @@
  */
 
 import type { FeatureModule } from '@pages/content/index';
-import type { VoyagerSettings, Folder, Locale } from '@core/types';
+import type { VoyagerSettings, Folder, FolderConversation, Locale } from '@core/types';
 import { DOM } from '@core/services/DOMService';
 import { Storage } from '@core/services/StorageService';
 import { Logger } from '@core/services/LoggerService';
@@ -25,6 +25,10 @@ let locale: Locale = 'en';
 
 const TAG = 'Folders';
 const LONG_PRESS_MS = 500;
+
+/** Module-level drag state — shared between setupFolderReorder and setupDragDrop
+ *  to avoid Firefox's dataTransfer.types security restrictions. */
+let activeFolderDragId: string | null = null;
 
 // SVG icon for the folder nav item (matches claude.ai's 20x20 icon style)
 const FOLDER_SVG = `<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0" aria-hidden="true"><path d="M2 5.5C2 4.11929 3.11929 3 4.5 3H7.17157C7.70201 3 8.21071 3.21071 8.58579 3.58579L9.91421 4.91421C10.0391 5.03914 10.2087 5.10957 10.3856 5.10957H15.5C16.8807 5.10957 18 6.22886 18 7.60957V14.5C18 15.8807 16.8807 17 15.5 17H4.5C3.11929 17 2 15.8807 2 14.5V5.5ZM4.5 4C3.67157 4 3 4.67157 3 5.5V14.5C3 15.3284 3.67157 16 4.5 16H15.5C16.3284 16 17 15.3284 17 14.5V7.60957C17 6.78114 16.3284 6.10957 15.5 6.10957H10.3856C9.94314 6.10957 9.51886 5.93386 9.20711 5.62211L7.87868 4.29368C7.69114 4.10614 7.437 4 7.17157 4H4.5Z"/></svg>`;
@@ -596,7 +600,7 @@ function renderFolder(folder: Folder): HTMLElement {
   const isOpen = state.openFolders.has(folder.id);
   const isSelected = state.selectedFolders.has(folder.id);
   const subfolders = state.folders.filter((f) => f.parentId === folder.id);
-  const hasChildren = subfolders.length > 0 || folder.conversationIds.length > 0;
+  const hasChildren = subfolders.length > 0 || folder.conversations.length > 0;
 
   // Row
   const row = DOM.createElement('div', {
@@ -658,7 +662,7 @@ function renderFolder(folder: Folder): HTMLElement {
   } else {
     const name = DOM.createElement('span', { class: 'voyager-folder-name' }, [folder.name]);
     const count = DOM.createElement('span', { class: 'voyager-folder-count' }, [
-      String(folder.conversationIds.length),
+      String(folder.conversations.length),
     ]);
     const delBtn = DOM.createElement('button', {
       class: 'voyager-folder-del',
@@ -669,7 +673,21 @@ function renderFolder(folder: Folder): HTMLElement {
       e.stopPropagation();
       void handleDeleteFolder(folder.id);
     });
-    row.append(icon, name, count, delBtn);
+    // Subfolder add button — only on root folders (max 2 levels)
+    if (folder.parentId === null) {
+      const addSubBtn = DOM.createElement('button', {
+        class: 'voyager-folder-add-sub',
+        title: t(locale).newSubfolder,
+        'aria-label': t(locale).newSubfolder,
+      }, ['+']);
+      addSubBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        void handleAddSubfolder(folder.id);
+      });
+      row.append(icon, name, count, addSubBtn, delBtn);
+    } else {
+      row.append(icon, name, count, delBtn);
+    }
   }
 
   el.appendChild(row);
@@ -682,14 +700,23 @@ function renderFolder(folder: Folder): HTMLElement {
       children.appendChild(renderFolder(sub));
     }
 
-    for (const convId of folder.conversationIds) {
+    for (const convRef of folder.conversations) {
       const conv = DOM.createElement('div', {
         class: 'voyager-folder-conv',
-        'data-voyager-id': convId,
+        'data-voyager-id': convRef.id,
       });
       const convIcon = DOM.createElement('span', { class: 'voyager-folder-conv-icon' }, ['\u{1F4AC}']);
-      const convName = DOM.createElement('span', {}, [convId.slice(0, 12) + '...']);
-      conv.append(convIcon, convName);
+      const convName = DOM.createElement('span', { class: 'voyager-folder-conv-name' }, [convRef.title]);
+      const convDel = DOM.createElement('button', {
+        class: 'voyager-folder-conv-del',
+        title: t(locale).removeFromFolder,
+        'aria-label': t(locale).removeFromFolder,
+      }, ['\u2715']);
+      convDel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        void handleRemoveConversation(folder.id, convRef.id);
+      });
+      conv.append(convIcon, convName, convDel);
       children.appendChild(conv);
     }
 
@@ -760,8 +787,24 @@ function handleFolderDblClick(target: Element): void {
 function handleConvClick(target: Element): void {
   const convId = target.getAttribute('data-voyager-id');
   if (!convId) return;
-  // Navigate to the conversation
-  window.location.href = `/chat/${convId}`;
+
+  const url = `/chat/${convId}`;
+
+  // Close the folder panel before navigating
+  state.panelOpen = false;
+  updateToggleActive();
+  removePanel();
+
+  // Try clicking the native sidebar link first (perfect SPA navigation via React Router)
+  const nativeLink = document.querySelector(`a[href="${url}"]`) as HTMLAnchorElement | null;
+  if (nativeLink) {
+    nativeLink.click();
+    return;
+  }
+
+  // Fallback: SPA navigation via History API (triggers our pushState hook → checkNavigation)
+  history.pushState(null, '', url);
+  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 function toggleSelect(folderId: string): void {
@@ -795,19 +838,50 @@ async function handleDeleteFolder(folderId: string): Promise<void> {
   renderPanel();
 }
 
+async function handleRemoveConversation(folderId: string, convId: string): Promise<void> {
+  const folder = state.folders.find((f) => f.id === folderId);
+  if (!folder) return;
+
+  const previousFolders = cloneFolders(state.folders);
+  folder.conversations = folder.conversations.filter((c) => c.id !== convId);
+
+  const saved = await persistFoldersWithRollback(previousFolders, 'Failed to remove conversation');
+  if (!saved) return;
+  renderPanel();
+}
+
 async function handleAddFolder(): Promise<void> {
   const previousFolders = cloneFolders(state.folders);
   const folder: Folder = {
     id: uuid(),
     name: t(locale).newFolder,
     parentId: null,
-    conversationIds: [],
+    conversations: [],
     createdAt: Date.now(),
     order: state.folders.filter((f) => f.parentId === null).length,
   };
   state.folders.push(folder);
   state.renamingId = folder.id;
   const saved = await persistFoldersWithRollback(previousFolders, 'Failed to create folder');
+  if (!saved) return;
+  renderPanel();
+}
+
+async function handleAddSubfolder(parentId: string): Promise<void> {
+  const previousFolders = cloneFolders(state.folders);
+  const subfolder: Folder = {
+    id: uuid(),
+    name: t(locale).newSubfolder,
+    parentId,
+    conversations: [],
+    createdAt: Date.now(),
+    order: state.folders.filter((f) => f.parentId === parentId).length,
+  };
+  state.folders.push(subfolder);
+  state.renamingId = subfolder.id;
+  // Auto-open parent so the new subfolder is visible
+  state.openFolders.add(parentId);
+  const saved = await persistFoldersWithRollback(previousFolders, 'Failed to create subfolder');
   if (!saved) return;
   renderPanel();
 }
@@ -842,8 +916,8 @@ function setupDragDrop(list: HTMLElement): void {
   // Drop targets on folders (only for conversation drops, not folder reorder)
   const dragOverHandler = (e: Event) => {
     const de = e as DragEvent;
-    // Skip if this is a folder reorder drag
-    if (de.dataTransfer?.types.includes('application/x-voyager-folder')) return;
+    // Skip if a folder reorder drag is active (use module-level var, not dataTransfer.types)
+    if (activeFolderDragId) return;
     const target = (de.target as Element | null)?.closest('.voyager-folder-row');
     if (target) {
       de.preventDefault();
@@ -872,13 +946,16 @@ function setupDragDrop(list: HTMLElement): void {
     if (!convId || !folderId) return;
 
     const folder = state.folders.find((f) => f.id === folderId);
-    if (folder && !folder.conversationIds.includes(convId)) {
+    if (folder && !folder.conversations.some((c) => c.id === convId)) {
       const previousFolders = cloneFolders(state.folders);
       // Remove from other folders first
       for (const f of state.folders) {
-        f.conversationIds = f.conversationIds.filter((id) => id !== convId);
+        f.conversations = f.conversations.filter((c) => c.id !== convId);
       }
-      folder.conversationIds.push(convId);
+      // Read the conversation title from the sidebar link
+      const sidebarLink = document.querySelector(`a[href="/chat/${convId}"]`);
+      const convTitle = sidebarLink?.textContent?.trim() || convId.slice(0, 12) + '...';
+      folder.conversations.push({ id: convId, title: convTitle });
 
       const saved = await persistFoldersWithRollback(
         previousFolders,
@@ -900,8 +977,6 @@ function setupDragDrop(list: HTMLElement): void {
 // ─── Folder Reorder (Drag & Drop) ───────────────────────────────
 
 function setupFolderReorder(list: HTMLElement): void {
-  let draggedFolderId: string | null = null;
-
   const rows = list.querySelectorAll('.voyager-folder-row[draggable="true"]');
   for (const row of rows) {
     const htmlRow = row as HTMLElement;
@@ -910,7 +985,7 @@ function setupFolderReorder(list: HTMLElement): void {
 
     const onDragStart = (e: Event) => {
       const de = e as DragEvent;
-      draggedFolderId = folderId;
+      activeFolderDragId = folderId;
       if (de.dataTransfer) {
         de.dataTransfer.setData('application/x-voyager-folder', folderId);
         de.dataTransfer.effectAllowed = 'move';
@@ -920,7 +995,7 @@ function setupFolderReorder(list: HTMLElement): void {
 
     const onDragEnd = () => {
       htmlRow.classList.remove('voyager-folder-dragging-row');
-      draggedFolderId = null;
+      activeFolderDragId = null;
       // Remove all reorder indicators
       list.querySelectorAll('.voyager-folder-reorder-target').forEach((el) =>
         el.classList.remove('voyager-folder-reorder-target'),
@@ -934,14 +1009,14 @@ function setupFolderReorder(list: HTMLElement): void {
   }
 
   // Dragover on folder rows — show reorder indicator
+  // Uses module-level activeFolderDragId instead of dataTransfer.types
+  // (Firefox restricts dataTransfer.types access after ~1s in dragover events)
   const onDragOver = (e: Event) => {
     const de = e as DragEvent;
-    if (!draggedFolderId) return;
-    // Only handle folder-to-folder reorder, not conversation drops
-    if (!de.dataTransfer?.types.includes('application/x-voyager-folder')) return;
+    if (!activeFolderDragId) return;
 
     const target = (de.target as Element | null)?.closest('.voyager-folder-row') as HTMLElement | null;
-    if (!target || target.getAttribute('data-voyager-id') === draggedFolderId) return;
+    if (!target || target.getAttribute('data-voyager-id') === activeFolderDragId) return;
 
     de.preventDefault();
     if (de.dataTransfer) de.dataTransfer.dropEffect = 'move';
@@ -954,16 +1029,20 @@ function setupFolderReorder(list: HTMLElement): void {
   };
 
   const onDragLeave = (e: Event) => {
-    const target = (e.target as Element | null)?.closest('.voyager-folder-row');
-    target?.classList.remove('voyager-folder-reorder-target');
+    const de = e as DragEvent;
+    const row = (de.target as Element | null)?.closest('.voyager-folder-row') as HTMLElement | null;
+    if (!row) return;
+    // Only remove highlight if we're actually leaving the row (not moving to a child element)
+    const related = de.relatedTarget as Element | null;
+    if (related && row.contains(related)) return;
+    row.classList.remove('voyager-folder-reorder-target');
   };
 
   const onDrop = async (e: Event) => {
     const de = e as DragEvent;
-    if (!draggedFolderId) return;
+    if (!activeFolderDragId) return;
 
-    const sourceFolderId = de.dataTransfer?.getData('application/x-voyager-folder');
-    if (!sourceFolderId) return;
+    const sourceFolderId = activeFolderDragId;
 
     de.preventDefault();
     const targetRow = (de.target as Element | null)?.closest('.voyager-folder-row');
@@ -984,10 +1063,14 @@ function setupFolderReorder(list: HTMLElement): void {
       .filter((f) => f.parentId === sourceFolder.parentId)
       .sort((a, b) => a.order - b.order);
 
-    // Remove source from current position and insert at target position
+    // Determine drag direction and insert accordingly
+    const sourceIdx = siblings.findIndex((f) => f.id === sourceFolderId);
+    const targetIdx = siblings.findIndex((f) => f.id === targetFolderId);
     const withoutSource = siblings.filter((f) => f.id !== sourceFolderId);
-    const targetIndex = withoutSource.findIndex((f) => f.id === targetFolderId);
-    withoutSource.splice(targetIndex + 1, 0, sourceFolder);
+    const newTargetIdx = withoutSource.findIndex((f) => f.id === targetFolderId);
+    // Dragging down → insert after target; dragging up → insert before target
+    const insertAt = sourceIdx < targetIdx ? newTargetIdx + 1 : newTargetIdx;
+    withoutSource.splice(insertAt, 0, sourceFolder);
 
     // Update order values
     withoutSource.forEach((f, i) => {
@@ -997,7 +1080,7 @@ function setupFolderReorder(list: HTMLElement): void {
     const saved = await persistFoldersWithRollback(previousFolders, 'Failed to reorder folders');
     if (!saved) return;
 
-    draggedFolderId = null;
+    activeFolderDragId = null;
     renderPanel();
     Logger.info(TAG, `Reordered folder "${sourceFolder.name}" after "${targetFolder.name}"`);
   };
@@ -1029,23 +1112,51 @@ function normalizeNonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function normalizeStringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  const ids = new Set<string>();
-  for (const item of value) {
-    if (typeof item !== 'string') continue;
-    const trimmed = item.trim();
-    if (!trimmed) continue;
-    ids.add(trimmed);
-  }
-  return [...ids];
-}
+// normalizeStringList removed — replaced by normalizeConversationList
 
 function normalizeTimestamp(value: unknown, fallback: number): number {
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
     return value;
   }
   return fallback;
+}
+
+/** Normalize conversation list, supporting both old (string[]) and new ({id,title}[]) formats */
+function normalizeConversationList(conversations: unknown, legacyIds: unknown): FolderConversation[] {
+  // New format: array of {id, title} objects
+  if (Array.isArray(conversations)) {
+    const result: FolderConversation[] = [];
+    const seen = new Set<string>();
+    for (const item of conversations) {
+      if (typeof item === 'object' && item !== null && typeof (item as Record<string, unknown>).id === 'string') {
+        const id = ((item as Record<string, unknown>).id as string).trim();
+        const title = typeof (item as Record<string, unknown>).title === 'string'
+          ? ((item as Record<string, unknown>).title as string).trim()
+          : id.slice(0, 12) + '...';
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          result.push({ id, title });
+        }
+      }
+    }
+    if (result.length > 0) return result;
+  }
+  // Legacy format: array of string IDs — migrate
+  if (Array.isArray(legacyIds)) {
+    const result: FolderConversation[] = [];
+    const seen = new Set<string>();
+    for (const item of legacyIds) {
+      if (typeof item === 'string') {
+        const id = item.trim();
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          result.push({ id, title: id.slice(0, 12) + '...' });
+        }
+      }
+    }
+    return result;
+  }
+  return [];
 }
 
 function normalizeOrder(value: unknown, fallback: number): number {
@@ -1068,7 +1179,7 @@ function normalizeImportedFolder(raw: unknown, fallbackOrder: number): Folder | 
     id: parsedId ?? uuid(),
     name: parsedName ?? t(locale).importedFolder,
     parentId: normalizeNonEmptyString(data.parentId),
-    conversationIds: normalizeStringList(data.conversationIds),
+    conversations: normalizeConversationList(data.conversations, data.conversationIds),
     createdAt: normalizeTimestamp(data.createdAt, now),
     order: normalizeOrder(data.order, fallbackOrder),
   };
@@ -1171,7 +1282,7 @@ function handleImport(): void {
 function cloneFolders(folders: Folder[]): Folder[] {
   return folders.map((folder) => ({
     ...folder,
-    conversationIds: [...folder.conversationIds],
+    conversations: folder.conversations.map((c) => ({ ...c })),
   }));
 }
 
@@ -1218,7 +1329,29 @@ export const FolderFeature: FeatureModule = {
     observeSidebarMutations();
 
     Storage.getFolders().then((folders) => {
+      // Migrate legacy conversationIds format to conversations
+      let needsMigration = false;
+      for (const folder of folders) {
+        const raw = folder as unknown as Record<string, unknown>;
+        if (Array.isArray(raw.conversationIds) && !Array.isArray(raw.conversations)) {
+          (folder as Folder).conversations = (raw.conversationIds as string[]).map((id: string) => ({
+            id,
+            title: id.slice(0, 12) + '...',
+          }));
+          delete raw.conversationIds;
+          needsMigration = true;
+        }
+        // Ensure conversations array exists
+        if (!Array.isArray(folder.conversations)) {
+          folder.conversations = [];
+          needsMigration = true;
+        }
+      }
       state.folders = folders;
+      if (needsMigration) {
+        void saveFolders();
+        Logger.info(TAG, 'Migrated folders from legacy conversationIds format');
+      }
       // If panel is already open, re-render with loaded data
       if (state.panelOpen) {
         renderPanel();
