@@ -29,6 +29,11 @@ pnpm-debug.log*
 Thumbs.db
 Desktop.ini
 
+# Design source files
+*.afphoto
+*.afdesign
+*.psd
+
 # Packaged extension bundles
 *.zip
 *.xpi
