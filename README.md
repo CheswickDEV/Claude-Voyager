@@ -37,7 +37,7 @@ Claude Voyager adds focused productivity tools directly into the claude.ai inter
 
 
 <p align="center">
-  <img src="https://i.imgur.com/xXf0N5b.png" />
+  <img src="examples/Preview.png" />
 </p>
 
 
